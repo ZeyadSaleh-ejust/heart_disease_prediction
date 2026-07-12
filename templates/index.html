@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Stroke Risk Predictor</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-start: #090d16;
+            --bg-end: #121829;
+            --card-bg: rgba(22, 30, 49, 0.7);
+            --card-border: rgba(255, 255, 255, 0.07);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --primary-hover: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+            --risk-low: #10b981;
+            --risk-medium: #f59e0b;
+            --risk-high: #ef4444;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at 50% 50%, var(--bg-end) 0%, var(--bg-start) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            overflow-x: hidden;
+        }
+
+        /* Decorative glowing orbs in background */
+        .orb-1 {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0) 70%);
+            top: -100px;
+            left: -100px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .orb-2 {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, rgba(168, 85, 247, 0) 70%);
+            bottom: -150px;
+            right: -100px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #ffffff, #a855f7, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* Form & Result Grid */
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 2rem;
+            align-items: stretch;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @media (max-width: 900px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 2.2rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .form-section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-primary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 0.75rem;
+        }
+
+        /* Quick-fill Button */
+        .quick-fill-btn {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .quick-fill-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* Form Grid Layout */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .input-group input, 
+        .input-group select {
+            background: rgba(10, 15, 30, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            outline: none;
+            width: 100%;
+        }
+
+        .input-group input:focus, 
+        .input-group select:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            background: rgba(10, 15, 30, 0.8);
+        }
+
+        .input-group select option {
+            background: #121829;
+            color: var(--text-primary);
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            grid-column: span 2;
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 1.1rem;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .submit-btn {
+                grid-column: span 1;
+            }
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Result Panel Styling */
+        .result-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .result-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            height: 100%;
+            min-height: 350px;
+        }
+
+        .result-placeholder svg {
+            width: 80px;
+            height: 80px;
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 1.5;
+            margin-bottom: 1.5rem;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .result-content {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            animation: zoomIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Ring Visualization */
+        .ring-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 2rem;
+        }
+
+        .ring-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .ring-track {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 16;
+        }
+
+        .ring-fill {
+            fill: none;
+            stroke: var(--risk-low);
+            stroke-width: 16;
+            stroke-linecap: round;
+            stroke-dasharray: 565.48; /* 2 * PI * r (r=90) */
+            stroke-dashoffset: 565.48;
+            transition: stroke-dashoffset 1s ease-out, stroke 1s ease;
+        }
+
+        .ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ring-percent {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .ring-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: -2px;
+        }
+
+        .risk-badge {
+            font-size: 1.25rem;
+            font-weight: 700;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.5s ease;
+        }
+
+        .risk-badge.low {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--risk-low);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .risk-badge.medium {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--risk-medium);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .risk-badge.high {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--risk-high);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            animation: heartBeat 1.5s infinite;
+        }
+
+        .risk-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 1.2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            max-width: 320px;
+        }
+
+        /* Spinner for Loading State */
+        .spinner {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.7; }
+        }
+
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            14% { transform: scale(1.05); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.05); }
+            70% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="orb-1"></div>
+    <div class="orb-2"></div>
+
+    <div class="container">
+        <header>
+            <h1>Cardiovascular Health Predictor</h1>
+            <p>Predict heart stroke risk using advanced machine learning models</p>
+        </header>
+
+        <div class="app-grid">
+            <!-- Parameter Inputs Card -->
+            <div class="card">
+                <div class="form-section-title">
+                    <span>Patient Health Metrics</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="quick-fill-btn" onclick="loadSample('low')">Load Low Risk</button>
+                        <button type="button" class="quick-fill-btn" onclick="loadSample('high')">Load High Risk</button>
+                    </div>
+                </div>
+
+                <form id="predictionForm" onsubmit="submitForm(event)">
+                    <div class="form-grid">
+                        <!-- Gender -->
+                        <div class="input-group">
+                            <label for="Gender">Gender</label>
+                            <select id="Gender" name="Gender" required>
+                                <option value="" disabled selected>Select gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+
+                        <!-- Age -->
+                        <div class="input-group">
+                            <label for="age">Age (Years)</label>
+                            <input type="number" id="age" name="age" min="1" max="120" placeholder="e.g. 45" required>
+                        </div>
+
+                        <!-- Education -->
+                        <div class="input-group">
+                            <label for="education">Education Level</label>
+                            <select id="education" name="education" required>
+                                <option value="" disabled selected>Select education</option>
+                                <option value="uneducated">Uneducated</option>
+                                <option value="high school">High School</option>
+                                <option value="undergraduate">Undergraduate</option>
+                                <option value="postgraduate">Postgraduate</option>
+                            </select>
+                        </div>
+
+                        <!-- Smoker -->
+                        <div class="input-group">
+                            <label for="currentSmoker">Current Smoker</label>
+                            <select id="currentSmoker" name="currentSmoker" onchange="toggleSmoker(this.value)" required>
+                                <option value="" disabled selected>Select smoking status</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+
+                        <!-- Cigs per Day -->
+                        <div class="input-group">
+                            <label for="cigsPerDay">Cigarettes Per Day</label>
+                            <input type="number" id="cigsPerDay" name="cigsPerDay" min="0" placeholder="e.g. 20" required>
+                        </div>
+
+                        <!-- Hypertension -->
+                        <div class="input-group">
+                            <label for="prevalentHyp">Prevalent Hypertension</label>
+                            <select id="prevalentHyp" name="prevalentHyp" required>
+                                <option value="" disabled selected>Select status</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+
+                        <!-- Total Cholesterol -->
+                        <div class="input-group">
+                            <label for="totChol">Total Cholesterol (mg/dL)</label>
+                            <input type="number" id="totChol" name="totChol" min="50" max="600" placeholder="e.g. 220" required>
+                        </div>
+
+                        <!-- Systolic BP -->
+                        <div class="input-group">
+                            <label for="sysBP">Systolic BP (mmHg)</label>
+                            <input type="number" id="sysBP" name="sysBP" min="50" max="300" placeholder="e.g. 140" required>
+                        </div>
+
+                        <!-- Diastolic BP -->
+                        <div class="input-group">
+                            <label for="diaBP">Diastolic BP (mmHg)</label>
+                            <input type="number" id="diaBP" name="diaBP" min="30" max="200" placeholder="e.g. 90" required>
+                        </div>
+
+                        <!-- BMI -->
+                        <div class="input-group">
+                            <label for="BMI">BMI (Body Mass Index)</label>
+                            <input type="number" id="BMI" name="BMI" step="0.1" min="10" max="60" placeholder="e.g. 28.5" required>
+                        </div>
+
+                        <!-- Heart Rate -->
+                        <div class="input-group">
+                            <label for="heartRate">Heart Rate (bpm)</label>
+                            <input type="number" id="heartRate" name="heartRate" min="30" max="220" placeholder="e.g. 80" required>
+                        </div>
+
+                        <!-- Glucose -->
+                        <div class="input-group">
+                            <label for="glucose">Glucose (mg/dL)</label>
+                            <input type="number" id="glucose" name="glucose" min="20" max="500" placeholder="e.g. 85" required>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            <span id="btnText">Analyze Risk</span>
+                            <div class="spinner" id="btnSpinner"></div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Prediction Results Card -->
+            <div class="card result-card">
+                <!-- Idle State -->
+                <div class="result-placeholder" id="idleState">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                    <h3>Ready for Prediction</h3>
+                    <p style="font-size: 0.9rem; margin-top: 0.5rem; text-align: center; max-width: 250px;">
+                        Fill out the health metrics form and click 'Analyze Risk' to estimate cardiac risk factors.
+                    </p>
+                </div>
+
+                <!-- Response State -->
+                <div class="result-content" id="resultContent">
+                    <h3 style="font-size: 1.4rem; font-weight: 600; margin-bottom: 1.5rem;">Analysis Complete</h3>
+                    
+                    <div class="ring-container">
+                        <svg class="ring-svg">
+                            <circle class="ring-track" cx="100" cy="100" r="90"></circle>
+                            <circle class="ring-fill" id="riskRing" cx="100" cy="100" r="90"></circle>
+                        </svg>
+                        <div class="ring-text">
+                            <span class="ring-percent" id="riskPercent">0%</span>
+                            <span class="ring-label">Risk Probability</span>
+                        </div>
+                    </div>
+
+                    <div class="risk-badge" id="riskBadge">Low Risk</div>
+
+                    <div class="risk-description" id="riskDesc">
+                        Based on the predictive model, your cardiovascular indicators are within standard limits. Maintain a healthy lifestyle and diet.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSmoker(value) {
+            const cigsInput = document.getElementById('cigsPerDay');
+            if (value === '0') {
+                cigsInput.value = '0';
+                cigsInput.disabled = true;
+            } else {
+                cigsInput.disabled = false;
+                if (cigsInput.value === '0') {
+                    cigsInput.value = '';
+                }
+            }
+        }
+
+        function loadSample(type) {
+            if (type === 'high') {
+                document.getElementById('Gender').value = 'Male';
+                document.getElementById('age').value = 65;
+                document.getElementById('education').value = 'uneducated';
+                document.getElementById('currentSmoker').value = '1';
+                toggleSmoker('1');
+                document.getElementById('cigsPerDay').value = 40;
+                document.getElementById('prevalentHyp').value = '1';
+                document.getElementById('totChol').value = 280;
+                document.getElementById('sysBP').value = 165;
+                document.getElementById('diaBP').value = 100;
+                document.getElementById('BMI').value = 32.5;
+                document.getElementById('heartRate').value = 85;
+                document.getElementById('glucose').value = 115;
+            } else {
+                document.getElementById('Gender').value = 'Male';
+                document.getElementById('age').value = 50;
+                document.getElementById('education').value = 'postgraduate';
+                document.getElementById('currentSmoker').value = '1';
+                toggleSmoker('1');
+                document.getElementById('cigsPerDay').value = 10;
+                document.getElementById('prevalentHyp').value = '0';
+                document.getElementById('totChol').value = 240;
+                document.getElementById('sysBP').value = 130;
+                document.getElementById('diaBP').value = 85;
+                document.getElementById('BMI').value = 27.0;
+                document.getElementById('heartRate').value = 75;
+                document.getElementById('glucose').value = 95;
+            }
+        }
+
+        async function submitForm(event) {
+            event.preventDefault();
+
+            const form = document.getElementById('predictionForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            
+            const idleState = document.getElementById('idleState');
+            const resultContent = document.getElementById('resultContent');
+            const riskPercent = document.getElementById('riskPercent');
+            const riskRing = document.getElementById('riskRing');
+            const riskBadge = document.getElementById('riskBadge');
+            const riskDesc = document.getElementById('riskDesc');
+
+            // Form Validation
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // Gather values
+            const data = {
+                Gender: document.getElementById('Gender').value,
+                age: parseInt(document.getElementById('age').value),
+                education: document.getElementById('education').value,
+                currentSmoker: parseInt(document.getElementById('currentSmoker').value),
+                cigsPerDay: parseInt(document.getElementById('cigsPerDay').value || 0),
+                prevalentHyp: parseInt(document.getElementById('prevalentHyp').value),
+                totChol: parseInt(document.getElementById('totChol').value),
+                sysBP: parseInt(document.getElementById('sysBP').value),
+                diaBP: parseInt(document.getElementById('diaBP').value),
+                BMI: parseFloat(document.getElementById('BMI').value),
+                heartRate: parseInt(document.getElementById('heartRate').value),
+                glucose: parseInt(document.getElementById('glucose').value)
+            };
+
+            // Loading state
+            btnText.style.display = 'none';
+            btnSpinner.style.display = 'block';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Prediction API failed with response code ' + response.status);
+                }
+
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Update UI
+                    idleState.style.display = 'none';
+                    resultContent.style.display = 'flex';
+                    
+                    const probabilityVal = result.probability;
+                    const percent = Math.round(probabilityVal * 100);
+                    
+                    // Count up percent animation
+                    let count = 0;
+                    const timer = setInterval(() => {
+                        if (count >= percent) {
+                            clearInterval(timer);
+                            riskPercent.textContent = percent + '%';
+                        } else {
+                            count++;
+                            riskPercent.textContent = count + '%';
+                        }
+                    }, 10);
+
+                    // Update stroke ring offset
+                    const radius = 90;
+                    const circumference = 2 * Math.PI * radius;
+                    const offset = circumference - (probabilityVal * circumference);
+                    riskRing.style.strokeDashoffset = offset;
+
+                    // Update badge style and recommendations
+                    riskBadge.className = 'risk-badge';
+                    if (probabilityVal < 0.2) {
+                        riskBadge.textContent = 'Low Risk';
+                        riskBadge.classList.add('low');
+                        document.documentElement.style.setProperty('--risk-low', '#10b981');
+                        riskRing.style.stroke = 'var(--risk-low)';
+                        riskDesc.textContent = 'Great news! Your estimated risk is low. Maintain current healthy lifestyle habits, a balanced diet, and regular exercise.';
+                    } else if (probabilityVal < 0.5) {
+                        riskBadge.textContent = 'Moderate Risk';
+                        riskBadge.classList.add('medium');
+                        document.documentElement.style.setProperty('--risk-low', 'var(--risk-medium)');
+                        riskRing.style.stroke = 'var(--risk-medium)';
+                        riskDesc.textContent = 'Caution: You have a moderate stroke risk. We recommend increasing physical activity, keeping close tabs on blood pressure, and consulting with a healthcare professional.';
+                    } else {
+                        riskBadge.textContent = 'High Risk';
+                        riskBadge.classList.add('high');
+                        document.documentElement.style.setProperty('--risk-low', 'var(--risk-high)');
+                        riskRing.style.stroke = 'var(--risk-high)';
+                        riskDesc.textContent = 'Urgent: High risk predicted. We strongly advise scheduling a check-up with a doctor immediately to monitor blood pressure, cholesterol levels, and assess preventive options.';
+                    }
+
+                } else {
+                    alert('Prediction error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection failure to the server. Please check that Python flask server is running.');
+            } finally {
+                btnText.style.display = 'block';
+                btnSpinner.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
